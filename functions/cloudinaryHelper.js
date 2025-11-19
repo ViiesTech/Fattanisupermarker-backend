@@ -26,23 +26,45 @@ async function deleteCloudinaryImageFromUrl(url) {
 }
 
 async function uploadImageInCloudinary(file, folder) {
-  if (!file) throw new Error("No file provided for upload");
+  if (!file) throw new Error("No file provided");
 
-  try {
-    const base64Data = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        resource_type: "auto",
+      },
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary upload error:", error);
+          return reject("Failed to upload to Cloudinary");
+        }
 
-    const result = await cloudinary.uploader.upload(base64Data, {
-      folder: folder,
-      resource_type: 'auto',
-    });
+        resolve(result.secure_url);
+      }
+    );
 
-    return result.secure_url;
-  } catch (error) {
-    console.error("Cloudinary upload error:", error);
-    throw new Error("Failed to upload image to Cloudinary");
-  }
+    stream.end(file.buffer);
+  });
 }
+// async function uploadImageInCloudinary(file, folder) {
+//   if (!file) throw new Error("No file provided for upload");
+
+//   try {
+//     const base64Data = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+
+//     const result = await cloudinary.uploader.upload(base64Data, {
+//       folder: folder,
+//       resource_type: 'auto',
+//     });
+
+//     return result.secure_url;
+//   } catch (error) {
+//     console.error("Cloudinary upload error:", error);
+//     throw new Error("Failed to upload image to Cloudinary");
+//   }
+// }
 
 module.exports = {
-  deleteCloudinaryImageFromUrl , uploadImageInCloudinary
+  deleteCloudinaryImageFromUrl, uploadImageInCloudinary
 }

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const ORDER_STATUSES = require("../constants/orderStatus");
 
 const OrderSchema = new mongoose.Schema({
   OrderById: {
@@ -28,12 +29,14 @@ const OrderSchema = new mongoose.Schema({
   },
   Order_Status: {
     type: String,
-    enum: ["New_Order", "Pending", "Dispatched", "Delivered", "Canceled"],
+    enum: ORDER_STATUSES,
     default: "New_Order",
     required: true,
   },
-},{
-    timestamps:true
+  assignedTo: { type: mongoose.Schema.ObjectId, ref: "Driver", default: null },
+  deliveryDate: { type: String }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model("Order", OrderSchema);
