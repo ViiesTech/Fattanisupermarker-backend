@@ -8,10 +8,15 @@ const OrderModal = require("../models/OrderModal");
 const DriverSchema = require('../models/Driver')
 const ORDER_STATUSES = require("../constants/orderStatus");
 const DRIVER_STATUSES = require("../constants/driverStatus");
+const Users = require("../models/Users");
+const bcrypt = require('bcryptjs')
+const JWT = require("jsonwebtoken");
+require("dotenv").config();
 
 const cloudinary_folder = "Fattanisupermarket/Images"
 const cloudinary_product_folder = "Fattanisupermarket/Product";
 const cloudinary_category_folder = "Fattanisupermarket/Category";
+
 async function uploadImage(req, res) {
   try {
     upload.single("image")(req, res, (err) => {
@@ -521,9 +526,39 @@ async function getDrivers(req, res) {
   }
 }
 
+async function adminLogin(req, res) {
+  try {
+    const { email, password, role } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email are required" });
+    if (!password) return res.status(400).json({ success: false, message: "Password are required" });
+    if (!role) return res.status(400).json({ success: false, message: "Role are required" });    
+
+    const admin = await Users.findOne({ email: email.toLowerCase(), role:role });
+
+    if (!admin) return res.status(404).json({ success: false, message: "Admin account not found" });
+
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) return res.status(400).json({ success: false, message: "Invalid password" });
+    
+    const tokenPayload = { _id: admin._id.toString(), email: admin.email }
+    
+    const token = JWT.sign(tokenPayload, process.env.JWT_SECRET_KEY);
+
+    const safeAdmin = admin.toObject();
+    delete safeAdmin.password;
+
+    return res.status(200).json({
+      success: true, message: "Admin logged in successfully", admin: safeAdmin, token
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong", error: error.message });
+  }
+}
+
+
 
 module.exports = {
   uploadImage, addProduct, getAllProducts, updateProduct, deleteProduct, addCategory,
   updateCategory, deleteCategory, getAllCategories, getAllOrder, updateOrderStatus,
-  addNewDriver, updateDriver, deleteDriver , getDrivers
+  addNewDriver, updateDriver, deleteDriver, getDrivers, adminLogin 
 };

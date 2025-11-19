@@ -2,6 +2,12 @@ const routes = require("express").Router();
 const upload = require("../middleware/multer");
 const adminController = require('../controllers/Admin');
 const localUpload = require("../middleware/localUpload");
+const AdminAuth = require("../middleware/adminAuth");
+
+routes.route('/auth/login')
+    .post(adminController.adminLogin)
+
+routes.use(AdminAuth); // admin middleware
 
 routes.post('/uploadImage', adminController.uploadImage)
 
@@ -45,5 +51,6 @@ routes.route('/driver/:driverId')
     )
     .delete(adminController.deleteDriver)
     .get(adminController.getDrivers)
+
 
 module.exports = routes;
