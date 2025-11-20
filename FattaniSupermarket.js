@@ -3,6 +3,7 @@ const path = require("path");
 const Database = require('./database/Database');
 const routes = require('./Routes');
 const adminRoutes = require('./routes/admin');
+const cors = require('cors')
 require('dotenv').config();
 // const { swaggerUi, swaggerSpec } = require('./swagger'); // Import Swagger
 
@@ -13,6 +14,9 @@ const PORT = process.env.PORT || 3000;
 Database();
 
 app.use(express.json());
+app.use(cors({
+  origin:"*"
+}))
 // ✅ Swagger docs route
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
