@@ -52,5 +52,7 @@ routes.route('/driver/:driverId')
     .delete(adminController.deleteDriver)
     .get(adminController.getDrivers)
 
+routes.get('/dashboardStats' , adminController.getDashboardStats)
+
 
 module.exports = routes;

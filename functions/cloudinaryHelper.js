@@ -1,5 +1,6 @@
 
 const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
 async function deleteCloudinaryImageFromUrl(url) {
   if (!url) return { result: "no_url_provided" };
 
@@ -30,21 +31,21 @@ async function uploadImageInCloudinary(file, folder) {
 
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: "auto",
-      },
-      (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          return reject("Failed to upload to Cloudinary");
-        }
-
+      { folder, resource_type: "auto" },
+      (err, result) => {
+        if (err) return reject(err);
         resolve(result.secure_url);
       }
     );
 
-    stream.end(file.buffer);
+    // pipe file stream from disk
+    if (file.buffer) {
+      stream.end(file.buffer);
+    } else if (file.path) {
+      fs.createReadStream(file.path).pipe(stream);
+    } else {
+      return reject(new Error("File has no buffer or path"));
+    }
   });
 }
 // async function uploadImageInCloudinary(file, folder) {

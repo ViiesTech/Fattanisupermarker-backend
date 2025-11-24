@@ -12,7 +12,14 @@ const DriverSchema = new mongoose.Schema({
     cnicFront: { type: String, required: true },
     cnicBack: { type: String, required: true },
     status: { type: String, enum: DRIVER_STATUSES, default: "active" },
-    deliveries: { type: Number, default: 0 }
+    deliveries: { type: Number, default: 0 },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null }
 }, { timestamps: true });
+
+DriverSchema.pre(/^find/, function (next) {
+    this.where({ isDeleted: false });
+    next();
+});
 
 module.exports = mongoose.model("Driver", DriverSchema);
