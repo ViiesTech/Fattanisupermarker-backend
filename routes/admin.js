@@ -18,6 +18,7 @@ routes.route('/product')
 routes.route('/product/:productId')
     .patch(upload.single("image"), adminController.updateProduct)
     .delete(adminController.deleteProduct)
+    .get(adminController.getAllProducts)
 
 // Category 
 routes.route('/category')

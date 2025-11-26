@@ -172,7 +172,13 @@ async function deleteProduct(req, res) {
 
 async function getAllProducts(req, res) {
   try {
+    const { productId } = req.params
+    if (productId) {
+      const product = await Products.findById(productId).populate('category')
+      if (!product) return req.status(404).json({ success: false, message: 'Product not found' })
 
+      return res.status(200).json({ success: true, message: 'Product', product })
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = 20;
     const skip = (page - 1) * limit;
@@ -682,10 +688,13 @@ async function getDashboardStats(req, res) {
           CompletedOrders: [{ $match: { Order_Status: "Delivered" } }, { $count: "count" }],
           readyForDelivery: [{ $match: { Order_Status: "Assigned" } }, { $count: "count" }],
           todayRevenue: [
-            { $match: { createdAt: { $gte: todayStart, $lte: todayEnd } } },
+            { $match: { createdAt: { $gte: todayStart, $lte: todayEnd }, Order_Status: "Delivered" } },
             { $group: { _id: null, totalRevenue: { $sum: "$Total_Price" } } }
           ],
-          totalRevenue: [{ $group: { _id: null, totalRevenue: { $sum: "$Total_Price" } } }],
+          totalRevenue: [
+            { $match: { Order_Status: "Delivered" } },
+            { $group: { _id: null, totalRevenue: { $sum: "$Total_Price" } } }
+          ],
           productsSold: [
             { $unwind: "$Purchased_Product_List" },
             { $group: { _id: null, totalSold: { $sum: "$Purchased_Product_List.total" } } }
@@ -704,8 +713,10 @@ async function getDashboardStats(req, res) {
     const pendingOrders = orderStats.pendingOrders[0]?.count || 0;
     const CompletedOrders = orderStats.CompletedOrders[0]?.count || 0;
     const readyForDelivery = orderStats.readyForDelivery[0]?.count || 0;
+
     const totalRevenue = orderStats.totalRevenue[0]?.totalRevenue || 0;
     const todayRevenue = orderStats.todayRevenue[0]?.totalRevenue || 0;
+
     const productsSold = orderStats.productsSold[0]?.totalSold || 0;
     const assignedOrders = orderStats.assignedOrders[0]?.count || 0;
     const deliveryToday = orderStats.deliveryToday[0]?.count || 0;
