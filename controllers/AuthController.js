@@ -669,7 +669,7 @@ async function googleLogin(req, res) {
 
     const newUser = await UserModel.create({
       googleId, name, email, password: '', phone: '',
-      FCMToken: '', isGoogleUser: true
+      FCMToken: '', isGoogleUser: true  
     });
 
     const token = JWT.sign(
