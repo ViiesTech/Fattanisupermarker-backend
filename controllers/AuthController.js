@@ -644,6 +644,51 @@ async function deleteUser(req, res) {
   }
 }
 
+async function googleLogin(req, res) {
+  try {
+    const { googleId, name, email } = req.body;
+    if (!googleId) return res.status(400).json({ success: false, msg: "googleId is required" });
+    if (!name) return res.status(400).json({ success: false, msg: "name is required" });
+    if (!email) return res.status(400).json({ success: false, msg: "email is required" });
+
+    const user = await UserModel.findOne({ googleId });
+
+    if (user) {
+      if (user.isDeleted) return res.status(403).json({ success: false, msg: "Your account has been deleted. Please contact support." });
+
+      const token = JWT.sign(
+        { _id: user._id, email: user.email },
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "5y" }
+      );
+      return res.status(200).json({ success: true, msg: "Google login successful", token, user })
+    }
+
+    const emailExists = await UserModel.findOne({ email });
+    if (emailExists) return res.status(400).json({ success: false, msg: "Email already exists. Login using email instead." });
+
+    const newUser = await UserModel.create({
+      googleId, name, email, password: '', phone: '',
+      FCMToken: '', isGoogleUser: true
+    });
+
+    const token = JWT.sign(
+      { _id: newUser._id, email: newUser.email },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "5y" }
+    );
+
+    res.status(200).json({ success: true, msg: "Google login successful", token, user: newUser });
+  } catch (error) {
+    console.error("Google login User Error:", error);
+    return res.status(400).json({
+      success: false,
+      message: "Server error while deleting User",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   signUpOrLoginWithGoogle,
   loginWithEmailOrPhone,
@@ -653,5 +698,5 @@ module.exports = {
   sendOtpOnMail,
   setNewPasswordByUser,
   deleteUser,
-  forgetPasswordOtpUser
+  forgetPasswordOtpUser, googleLogin
 };

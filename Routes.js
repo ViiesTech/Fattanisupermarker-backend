@@ -18,6 +18,7 @@ const {
   setNewPasswordByUser,
   signUpOrLoginWithGoogle,
   updateUserById,
+  googleLogin,
 } = require("./controllers/AuthController");
 
 const { CreateOrder, GetMyOrders } = require("./controllers/OrderController");
@@ -31,6 +32,7 @@ routes.post("/setNewPasswordByUser", setNewPasswordByUser);
 routes.post("/signUpOrLoginWithGoogle", signUpOrLoginWithGoogle);
 routes.put("/updateUserById/:id", updateUserById);
 routes.delete("/deleteUser/:id", deleteUser);
+routes.post('/googleLogin', googleLogin)
 
 //Main Routes
 routes.get("/getProductsByCatagories", getProductsByCatagories);

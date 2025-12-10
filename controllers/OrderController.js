@@ -60,10 +60,11 @@ async function GetMyOrders(req, res) {
   const { UserId } = req.query;
 
   try {
-    const result = await OrderModal.find({ OrderById: UserId }).populate(
-      "OrderById",
-      "-password"
-    ); // ✅ must match schema field name
+    const result = await OrderModal.find({ OrderById: UserId })
+    .populate([
+      {path:'OrderById' , select:'-password'},
+      {path:'assignedTo' , select:'-password'}
+    ])
 
     res.send({
       success: true,
