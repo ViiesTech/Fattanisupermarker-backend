@@ -273,14 +273,55 @@ async function updateSingleProductSubCategory() {
   }
 }
 
+async function checkStock(req, res) {
+  try {
+    const { productId, quantity } = req.query;
+
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    const product = await ProductModal.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    const requestedQty = parseInt(quantity, 10) || 1;
+    const isAvailable = product.stockCount >= requestedQty;
+
+    return res.status(200).json({
+      success: true,
+      isAvailable,
+      stockCount: product.stockCount,
+      message: isAvailable
+        ? "Stock available"
+        : `Only ${product.stockCount} items available`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error checking stock",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   //apis
   getProductsByCatagories,
   getProductParentCategories,
   getProductsBySubcategories,
   searchProducts,
+  checkStock,
 
-  
+
   //fucntios
   updateSingleProductCategory,
   updateSingleProductSubCategory,

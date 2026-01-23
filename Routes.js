@@ -6,6 +6,7 @@ const {
   updateSingleProductSubCategory,
   getProductsBySubcategories,
   searchProducts,
+  checkStock,
   //   getProductSubCategroies
 } = require("./controllers/ProductController");
 const {
@@ -52,6 +53,7 @@ routes.get("/getProductsByCatagories", getProductsByCatagories);
 routes.get("/getProductParentCategories", getProductParentCategories);
 routes.get("/products-by-subcategories", getProductsBySubcategories);
 routes.get("/searchProducts", searchProducts);
+routes.get("/checkStock", checkStock);
 
 //Order Apis
 routes.post("/CreateOrder", CreateOrder);
