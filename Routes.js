@@ -22,6 +22,19 @@ const {
 } = require("./controllers/AuthController");
 
 const { CreateOrder, GetMyOrders } = require("./controllers/OrderController");
+const {
+  addProductOnDeal,
+  getProductsOnDeal,
+  updateProductDeal,
+  removeProductFromDeal,
+} = require("./controllers/ProductDealsController");
+
+const {
+  createBanner,
+  getAllBanners,
+  updateBanner,
+  deleteBanner,
+} = require("./controllers/BannerController");
 
 //Auth Routes
 routes.post("/signupWithEmailOrPhoneandPassword", SignupWithEmailOrPhoneandPassword);
@@ -43,6 +56,21 @@ routes.get("/searchProducts", searchProducts);
 //Order Apis
 routes.post("/CreateOrder", CreateOrder);
 routes.get("/GetMyOrders", GetMyOrders);
+
+//Product discount api
+routes.post("/addProductOnDeal", addProductOnDeal);
+routes.get("/getProductsOnDeal", getProductsOnDeal);
+routes.put("/updateProductDeal", updateProductDeal);
+routes.post("/removeProductFromDeal", removeProductFromDeal);
+
+const upload = require("./middleware/multer");
+
+//Banner Apis
+routes.post("/createBanner", upload.single("bannerImage"), createBanner);
+routes.get("/getAllBanners", getAllBanners);
+routes.put("/updateBanner/:id", upload.single("bannerImage"), updateBanner);
+routes.delete("/deleteBanner/:id", deleteBanner);
+
 
 
 // routes.get("/getProductSubCategroies", getProductSubCategroies);
