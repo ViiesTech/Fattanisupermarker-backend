@@ -155,28 +155,52 @@ async function searchProducts(req, res) {
     const numericLimit = parseInt(limit, 10);
     const skip = (numericPage - 1) * numericLimit;
 
-    // 🧠 Case-insensitive partial search on multiple fields
+    // Use text index for better relevance
     const filter = {
-      $or: [
-        { name: { $regex: query, $options: "i" } }, // search in name
-        { subCategory: { $regex: query, $options: "i" } }, // optional: search in subCategory
-        { parentCategory: { $regex: query, $options: "i" } }, // optional: search in parentCategory
-      ],
+      $text: { $search: query }
     };
 
     // Total count for pagination
     const total = await ProductModal.countDocuments(filter);
 
-    // Fetch paginated results
-    const products = await ProductModal.find(filter)
+    // Fetch paginated results with relevance score
+    const products = await ProductModal.find(
+      filter,
+      { score: { $meta: "textScore" } }
+    )
+      .sort({ score: { $meta: "textScore" } })
       .skip(skip)
       .limit(numericLimit)
       .lean();
 
     if (!products.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No products found for this search term",
+      // Fallback to regex if text search yields no results (for partial matches)
+      const regexFilter = {
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { subCategory: { $regex: query, $options: "i" } },
+          { parentCategory: { $regex: query, $options: "i" } },
+        ],
+      };
+
+      const fallbackProducts = await ProductModal.find(regexFilter)
+        .limit(numericLimit)
+        .lean();
+
+      if (!fallbackProducts.length) {
+        return res.status(404).json({
+          success: false,
+          message: "No products found for this search term",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Products fetched successfully (fallback)",
+        total: fallbackProducts.length,
+        currentPage: numericPage,
+        pageSize: numericLimit,
+        products: fallbackProducts,
       });
     }
 
@@ -194,6 +218,55 @@ async function searchProducts(req, res) {
     return res.status(500).json({
       success: false,
       message: "Error searching products",
+      error: error.message,
+    });
+  }
+}
+
+// search suggestions api
+async function getSearchSuggestions(req, res) {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(200).json({
+        success: true,
+        suggestions: [],
+      });
+    }
+
+    // Lightweight search for suggestions
+    const suggestions = await ProductModal.find(
+      { name: { $regex: `^${query}`, $options: "i" } },
+      { name: 1, productImage: 1, price: 1, _id: 1 }
+    )
+      .limit(10)
+      .lean();
+
+    // If not enough results starting with query, search anywhere in name
+    if (suggestions.length < 5) {
+      const additionalSuggestions = await ProductModal.find(
+        {
+          name: { $regex: query, $options: "i" },
+          _id: { $nin: suggestions.map(s => s._id) }
+        },
+        { name: 1, productImage: 1, price: 1, _id: 1 }
+      )
+        .limit(10 - suggestions.length)
+        .lean();
+
+      suggestions.push(...additionalSuggestions);
+    }
+
+    return res.status(200).json({
+      success: true,
+      suggestions,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching search suggestions:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching search suggestions",
       error: error.message,
     });
   }
@@ -319,6 +392,7 @@ module.exports = {
   getProductParentCategories,
   getProductsBySubcategories,
   searchProducts,
+  getSearchSuggestions,
   checkStock,
 
 

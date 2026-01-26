@@ -21,6 +21,8 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
+productSchema.index({ name: 'text' });
+
 productSchema.pre('save', function (next) {
   this.inStock = this.stockCount > 0;
   next();
