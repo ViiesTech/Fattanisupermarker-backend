@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   phone: { type: String },
   FCMToken: { type: String },
   isDeleted: { type: Boolean, default: false },
-  googleId: { type: String, default: null, unique: true, sparse: true },
+  googleId: { type: String, unique: true, sparse: true },
   isGoogleUser: { type: Boolean, default: false },
 }, {
   timestamps: true
