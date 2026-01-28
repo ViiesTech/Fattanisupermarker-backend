@@ -8,6 +8,8 @@ const {
   searchProducts,
   getSearchSuggestions,
   checkStock,
+  getAllProducts,
+  migrateBarcodes,
   //   getProductSubCategroies
 } = require("./controllers/ProductController");
 const {
@@ -54,6 +56,8 @@ routes.get("/getProductsByCatagories", getProductsByCatagories);
 routes.get("/getProductParentCategories", getProductParentCategories);
 routes.get("/products-by-subcategories", getProductsBySubcategories);
 routes.get("/checkStock", checkStock);
+routes.get("/getAllProducts", getAllProducts);
+routes.get("/migrateBarcodes", migrateBarcodes);
 
 //search apis
 routes.get("/searchProducts", searchProducts);

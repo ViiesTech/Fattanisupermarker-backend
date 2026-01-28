@@ -386,6 +386,52 @@ async function checkStock(req, res) {
   }
 }
 
+async function getAllProducts(req, res) {
+  try {
+
+
+    const total = await ProductModal.countDocuments();
+    const products = await ProductModal.find()
+
+
+    return res.status(200).json({
+      success: true,
+      message: "All products fetched successfully",
+      total,
+      products,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching all products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching all products",
+      error: error.message,
+    });
+  }
+}
+
+async function migrateBarcodes(req, res) {
+  try {
+    const result = await ProductModal.updateMany(
+      { barcode: { $exists: false } },
+      { $set: { barcode: "" } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Migration completed successfully",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("❌ Error migrating barcodes:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error migrating barcodes",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   //apis
   getProductsByCatagories,
@@ -394,6 +440,8 @@ module.exports = {
   searchProducts,
   getSearchSuggestions,
   checkStock,
+  getAllProducts,
+  migrateBarcodes,
 
 
   //fucntios

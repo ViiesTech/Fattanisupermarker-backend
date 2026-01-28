@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema({
   status: { type: String, enum: ["active", "inactive"], default: "active" },
   isOnDeal: { type: Boolean, default: false },
   dealPercentage: { type: Number },
+  barcode: { type: Number, default: 0 },
 }, {
   timestamps: true
 });
