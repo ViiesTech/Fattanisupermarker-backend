@@ -689,6 +689,120 @@ async function googleLogin(req, res) {
   }
 }
 
+async function posLogin(req, res) {
+  try {
+    const { posUsername, password } = req.body;
+
+    if (!posUsername || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "POS Username and password are required",
+      });
+    }
+
+    const user = await UserModel.findOne({ posUsername, role: "pos" });
+
+    if (!user) {
+      return res.status(200).json({
+        success: false,
+        message: "POS User not found",
+      });
+    }
+
+    if (user.isDeleted) {
+      return res.status(200).json({
+        success: false,
+        message: "POS account is deleted",
+      });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(200).json({
+        success: false,
+        message: "Incorrect password",
+      });
+    }
+
+    const payload = {
+      _id: user._id,
+      posUsername: user.posUsername,
+      role: user.role,
+    };
+
+    const token = JWT.sign(payload, process.env.JWT_SECRET_KEY, {
+      expiresIn: "5y",
+    });
+
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    return res.status(200).json({
+      success: true,
+      message: "POS Login successful",
+      data: safeUser,
+      token,
+    });
+  } catch (error) {
+    console.error("POS Login Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+}
+
+async function createPOSUser(req, res) {
+  try {
+    const { posUsername, password, name } = req.body;
+
+    if (!posUsername || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "POS Username and password are required",
+      });
+    }
+
+    const existingUser = await UserModel.findOne({ posUsername });
+    if (existingUser) {
+      return res.status(200).json({
+        success: false,
+        message: "POS Username already exists",
+      });
+    }
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new UserModel({
+      posUsername,
+      password: hashPassword,
+      name,
+      role: "pos",
+      email: `${posUsername}@pos.internal`, // Dummy email since it's required in schema
+    });
+
+    await newUser.save();
+
+    const safeUser = newUser.toObject();
+    delete safeUser.password;
+
+    return res.status(201).json({
+      success: true,
+      message: "POS User created successfully",
+      data: safeUser,
+    });
+  } catch (error) {
+    console.error("Create POS User Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   signUpOrLoginWithGoogle,
   loginWithEmailOrPhone,
@@ -698,5 +812,8 @@ module.exports = {
   sendOtpOnMail,
   setNewPasswordByUser,
   deleteUser,
-  forgetPasswordOtpUser, googleLogin
+  forgetPasswordOtpUser,
+  googleLogin,
+  posLogin,
+  createPOSUser,
 };

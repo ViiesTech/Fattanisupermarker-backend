@@ -9,6 +9,8 @@ const UserSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false },
   googleId: { type: String, unique: true, sparse: true },
   isGoogleUser: { type: Boolean, default: false },
+  role: { type: String, enum: ["user", "pos", "admin"], default: "user" },
+  posUsername: { type: String, unique: true, sparse: true },
 }, {
   timestamps: true
 });
